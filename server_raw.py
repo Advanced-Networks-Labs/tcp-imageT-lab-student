@@ -54,16 +54,17 @@ def run_server():
         # TODO 7: Reconstruct the raw numpy array and reshape it to (height, width, channels).
      
         raise NotImplementedError("TODO 7: Reconstruct the raw pixel array")
+        
+        # TODO 8: Calculate and log network performance metrics (Latency, Packet loss, Throughput KB/s)
+        
+        raise NotImplementedError("TODO 8: Calculate network performance metrics")
+ 
+        print(f"Raw Transfer Complete | Size: {HEADER_SIZE + payload_length} bytes")
+        print(f"Metrics | Latency: {latency_ms:.3f} ms | Packet loss: {packet_loss:.2f} % | "
+              f"Throughput: {throughput_kbps:.2f} KB/s")
+        
 
-        transfer_duration = time.time() - start_time
-
-        # TODO 8: Compute the throughput in MB/s from payload_length and transfer_duration.
-        raise NotImplementedError("TODO 8: Compute the throughput")
-
-        print(f"Raw Transfer Complete | Size: {HEADER_SIZE + payload_length} bytes | "
-              f"Time: {transfer_duration:.4f}s | Throughput: {throughput:.3f} MB/s")
-
-       
+             
 
     finally:
         conn.close()
