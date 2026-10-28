@@ -9,9 +9,9 @@ HEADER_SIZE = 8  # 2 bytes height + 2 bytes width + 4 bytes payload length
 
 
 def recv_exact(sock, n):
-    """TODO 3: Implement a robust helper that reads exactly n bytes from a TCP stream.
+    """TODO 4: Implement a robust helper that reads exactly n bytes from a TCP stream.
     """
-    raise NotImplementedError("TODO 3: Implement recv_exact")
+    raise NotImplementedError("TODO 4: Implement recv_exact")
 
 
 def run_server():
@@ -32,12 +32,12 @@ def run_server():
             return
         start_time = time.time()
 
-        # TODO 4: Read the exact header bytes using recv_exact (HEADER_SIZE bytes).
+        # TODO 5: Read the exact header bytes using recv_exact (HEADER_SIZE bytes).
         # Stop with an error message if the connection closed before the full header arrived.
-        raise NotImplementedError("TODO 4: Read the header")
+        raise NotImplementedError("TODO 5: Read the header")
 
-        # TODO 5: Unpack the header fields using struct.unpack()
-        raise NotImplementedError("TODO 5: Unpack the header")
+        # TODO 6: Unpack the header fields using struct.unpack()
+        raise NotImplementedError("TODO 6: Unpack the header")
 
         print(f"Header received: {width}x{height}, payload = {payload_length} bytes")
 
@@ -47,17 +47,17 @@ def run_server():
             return
        
 
-        # TODO 6: Read the exact payload bytes (payload_length) using recv_exact.
+        # TODO 7: Read the exact payload bytes (payload_length) using recv_exact.
         # Stop with an error message if the connection closed before the full image arrived.
-        raise NotImplementedError("TODO 6: Read the payload")
+        raise NotImplementedError("TODO 7: Read the payload")
 
-        # TODO 7: Reconstruct the raw numpy array and reshape it to (height, width, channels).
+        # TODO 8: Reconstruct the raw numpy array and reshape it to (height, width, channels).
      
-        raise NotImplementedError("TODO 7: Reconstruct the raw pixel array")
+        raise NotImplementedError("TODO 8: Reconstruct the raw pixel array")
         
-        # TODO 8: Calculate and log network performance metrics (Latency, Packet loss, Throughput KB/s)
+        # TODO 9: Calculate and log network performance metrics (Latency, Packet loss, Throughput KB/s)
         
-        raise NotImplementedError("TODO 8: Calculate network performance metrics")
+        raise NotImplementedError("TODO 9: Calculate network performance metrics")
  
         print(f"Raw Transfer Complete | Size: {HEADER_SIZE + payload_length} bytes")
         print(f"Metrics | Latency: {latency_ms:.3f} ms | Packet loss: {packet_loss:.2f} % | "
