@@ -1,7 +1,7 @@
 import socket
 import struct
 import time
-import numpy as np      
+import numpy as np     
 import cv2
 
 PORT = 8080
@@ -15,8 +15,8 @@ def recv_exact(sock, n):
     
     data = bytearray()
     while len(data) < n:
-        chunk = sock.recv(n - len(data))    
-        if not chunk:                    
+        chunk = sock.recv(n - len(data))   
+        if not chunk:                      
             return None
         data.extend(chunk)
     return bytes(data)
@@ -42,13 +42,13 @@ def run_server():
 
         # TODO 5: Read the exact header bytes using recv_exact (HEADER_SIZE bytes).
         # Stop with an error message if the connection closed before the full header arrived.
-        header = recv_exact(conn, HEADER_SIZE)                  
+        header = recv_exact(conn, HEADER_SIZE)                 
         if header is None:
             print("Error: connection closed before the full header arrived.")
             return
 
         # TODO 6: Unpack the header fields using struct.unpack()
-        height, width, payload_length = struct.unpack('!HHI', header)  
+        height, width, payload_length = struct.unpack('!HHI', header)   
 
         print(f"Header received: {width}x{height}, payload = {payload_length} bytes")
 
@@ -60,17 +60,18 @@ def run_server():
 
         # TODO 7: Read the exact payload bytes (payload_length) using recv_exact.
         # Stop with an error message if the connection closed before the full image arrived.
-        payload = recv_exact(conn, payload_length)              
+        payload = recv_exact(conn, payload_length)             
         if payload is None:
             print("Error: connection closed before the full image arrived.")
             return
 
         # TODO 8: Reconstruct the raw numpy array and reshape it to (height, width, channels).
-        channels = payload_length // pixels                    
+        channels = payload_length // pixels                   
         img = np.frombuffer(payload, dtype=np.uint8).reshape(height, width, channels)
-        cv2.imwrite('received.png', img)                       
+        cv2.imwrite('received.png', img)                        
+        
         # TODO 9: Calculate and log network performance metrics (Latency, Packet loss, Throughput KB/s)
-        elapsed = time.time() - start_time                     
+        elapsed = time.time() - start_time                      
         latency_ms = elapsed * 1000
         received_bytes = HEADER_SIZE + len(payload)
         expected_bytes = HEADER_SIZE + payload_length
