@@ -1,17 +1,29 @@
 import socket
 import struct
 import time
+
 import cv2
+import numpy as np
 
 PORT = 8080
-HEADER_SIZE = 8  # 2 bytes height + 2 bytes width + 4 bytes payload length
-
+HEADER_FORMAT = '!HHI'                          # must match the client exactly
+HEADER_SIZE = struct.calcsize(HEADER_FORMAT)    # 2 bytes height + 2 bytes width + 4 bytes payload length = 8
+OUTPUT_PATH = 'received.png'
 
 
 def recv_exact(sock, n):
-    """TODO 4: Implement a robust helper that reads exactly n bytes from a TCP stream.
+    """TODO 4: Read exactly n bytes from a TCP stream.
+
+    recv(k) may return fewer than k bytes, so loop until n bytes are collected.
+    Returns the bytes, or None if the connection closed before n bytes arrived.
     """
-    raise NotImplementedError("TODO 4: Implement recv_exact")
+    buffer = bytearray()
+    while len(buffer) < n:
+        chunk = sock.recv(n - len(buffer))
+        if not chunk:          # empty bytes = peer closed the connection
+            return None
+        buffer.extend(chunk)
+    return bytes(buffer)
 
 
 def run_server():
@@ -33,11 +45,13 @@ def run_server():
         start_time = time.time()
 
         # TODO 5: Read the exact header bytes using recv_exact (HEADER_SIZE bytes).
-        # Stop with an error message if the connection closed before the full header arrived.
-        raise NotImplementedError("TODO 5: Read the header")
+        header = recv_exact(conn, HEADER_SIZE)
+        if header is None:
+            print("Error: connection closed before the full header arrived.")
+            return
 
         # TODO 6: Unpack the header fields using struct.unpack()
-        raise NotImplementedError("TODO 6: Unpack the header")
+        height, width, payload_length = struct.unpack(HEADER_FORMAT, header)
 
         print(f"Header received: {width}x{height}, payload = {payload_length} bytes")
 
@@ -45,26 +59,31 @@ def run_server():
         if pixels == 0 or payload_length % pixels != 0:
             print("Error: payload length does not match the image dimensions.")
             return
-       
+        channels = payload_length // pixels   # channels are not in the header: derive them
 
         # TODO 7: Read the exact payload bytes (payload_length) using recv_exact.
-        # Stop with an error message if the connection closed before the full image arrived.
-        raise NotImplementedError("TODO 7: Read the payload")
+        payload = recv_exact(conn, payload_length)
+        if payload is None:
+            print("Error: connection closed before the full image arrived.")
+            return
+        end_time = time.time()   # stop the clock now: saving the PNG below is not network time
 
         # TODO 8: Reconstruct the raw numpy array and reshape it to (height, width, channels).
-     
-        raise NotImplementedError("TODO 8: Reconstruct the raw pixel array")
-        
+        img = np.frombuffer(payload, dtype=np.uint8).reshape((height, width, channels))
+        cv2.imwrite(OUTPUT_PATH, img)
+        print(f"Image reconstructed {img.shape} and saved as '{OUTPUT_PATH}'.")
+
         # TODO 9: Calculate and log network performance metrics (Latency, Packet loss, Throughput KB/s)
-        
-        raise NotImplementedError("TODO 9: Calculate network performance metrics")
- 
+        elapsed = end_time - start_time
+        expected_bytes = HEADER_SIZE + payload_length
+        received_bytes = HEADER_SIZE + len(payload)
+        latency_ms = elapsed * 1000
+        packet_loss = (expected_bytes - received_bytes) / expected_bytes * 100  # 0 on TCP
+        throughput_kbps = (received_bytes / 1024) / elapsed if elapsed > 0 else float('inf')
+
         print(f"Raw Transfer Complete | Size: {HEADER_SIZE + payload_length} bytes")
         print(f"Metrics | Latency: {latency_ms:.3f} ms | Packet loss: {packet_loss:.2f} % | "
               f"Throughput: {throughput_kbps:.2f} KB/s")
-        
-
-             
 
     finally:
         conn.close()
