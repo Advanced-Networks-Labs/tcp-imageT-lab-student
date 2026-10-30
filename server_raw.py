@@ -1,18 +1,13 @@
 import socket
 import struct
 import time
-<<<<<<< HEAD
 
 import cv2
 import numpy as np
-=======
-import cv2
->>>>>>> 088026bb20d0528c287f487b908403c1ba367abb
 
 PORT = 8080
-HEADER_SIZE = 8  # 2 bytes height + 2 bytes width + 4 bytes payload length
-
-<<<<<<< HEAD
+HEADER_FORMAT = '!HHI'                          # must match the client exactly
+HEADER_SIZE = struct.calcsize(HEADER_FORMAT)    # 2 bytes height + 2 bytes width + 4 bytes payload length = 8
 OUTPUT_PATH = 'received.png'
 
 
@@ -29,14 +24,6 @@ def recv_exact(sock, n):
             return None
         buffer.extend(chunk)
     return bytes(buffer)
-=======
-
-
-def recv_exact(sock, n):
-    """TODO 4: Implement a robust helper that reads exactly n bytes from a TCP stream.
-    """
-    raise NotImplementedError("TODO 4: Implement recv_exact")
->>>>>>> 088026bb20d0528c287f487b908403c1ba367abb
 
 
 def run_server():
@@ -58,7 +45,6 @@ def run_server():
         start_time = time.time()
 
         # TODO 5: Read the exact header bytes using recv_exact (HEADER_SIZE bytes).
-<<<<<<< HEAD
         header = recv_exact(conn, HEADER_SIZE)
         if header is None:
             print("Error: connection closed before the full header arrived.")
@@ -66,13 +52,6 @@ def run_server():
 
         # TODO 6: Unpack the header fields using struct.unpack()
         height, width, payload_length = struct.unpack(HEADER_FORMAT, header)
-=======
-        # Stop with an error message if the connection closed before the full header arrived.
-        raise NotImplementedError("TODO 5: Read the header")
-
-        # TODO 6: Unpack the header fields using struct.unpack()
-        raise NotImplementedError("TODO 6: Unpack the header")
->>>>>>> 088026bb20d0528c287f487b908403c1ba367abb
 
         print(f"Header received: {width}x{height}, payload = {payload_length} bytes")
 
@@ -80,7 +59,6 @@ def run_server():
         if pixels == 0 or payload_length % pixels != 0:
             print("Error: payload length does not match the image dimensions.")
             return
-<<<<<<< HEAD
         channels = payload_length // pixels   # channels are not in the header: derive them
 
         # TODO 7: Read the exact payload bytes (payload_length) using recv_exact.
@@ -88,6 +66,7 @@ def run_server():
         if payload is None:
             print("Error: connection closed before the full image arrived.")
             return
+        end_time = time.time()   # stop the clock now: saving the PNG below is not network time
 
         # TODO 8: Reconstruct the raw numpy array and reshape it to (height, width, channels).
         img = np.frombuffer(payload, dtype=np.uint8).reshape((height, width, channels))
@@ -95,7 +74,7 @@ def run_server():
         print(f"Image reconstructed {img.shape} and saved as '{OUTPUT_PATH}'.")
 
         # TODO 9: Calculate and log network performance metrics (Latency, Packet loss, Throughput KB/s)
-        elapsed = time.time() - start_time
+        elapsed = end_time - start_time
         expected_bytes = HEADER_SIZE + payload_length
         received_bytes = HEADER_SIZE + len(payload)
         latency_ms = elapsed * 1000
@@ -105,28 +84,6 @@ def run_server():
         print(f"Raw Transfer Complete | Size: {HEADER_SIZE + payload_length} bytes")
         print(f"Metrics | Latency: {latency_ms:.3f} ms | Packet loss: {packet_loss:.2f} % | "
               f"Throughput: {throughput_kbps:.2f} KB/s")
-=======
-       
-
-        # TODO 7: Read the exact payload bytes (payload_length) using recv_exact.
-        # Stop with an error message if the connection closed before the full image arrived.
-        raise NotImplementedError("TODO 7: Read the payload")
-
-        # TODO 8: Reconstruct the raw numpy array and reshape it to (height, width, channels).
-     
-        raise NotImplementedError("TODO 8: Reconstruct the raw pixel array")
-        
-        # TODO 9: Calculate and log network performance metrics (Latency, Packet loss, Throughput KB/s)
-        
-        raise NotImplementedError("TODO 9: Calculate network performance metrics")
- 
-        print(f"Raw Transfer Complete | Size: {HEADER_SIZE + payload_length} bytes")
-        print(f"Metrics | Latency: {latency_ms:.3f} ms | Packet loss: {packet_loss:.2f} % | "
-              f"Throughput: {throughput_kbps:.2f} KB/s")
-        
-
-             
->>>>>>> 088026bb20d0528c287f487b908403c1ba367abb
 
     finally:
         conn.close()
