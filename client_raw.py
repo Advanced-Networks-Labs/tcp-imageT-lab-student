@@ -2,7 +2,7 @@ import socket
 import struct
 import time
 import cv2
-import numpy as np           
+import numpy as np            
 
 SERVER_IP = '127.0.0.1'
 PORT = 8080
@@ -37,7 +37,7 @@ def generate_test_image(IMAGE_PATH, width, height):
     cv2.putText(image, f'{width}x{height} px', (width // 2 - 60, height // 2 + 120), font, 0.7, (255, 255, 255), 1)
 
     # 5. Save the image file
-    cv2.imwrite(IMAGE_PATH, image)    
+    cv2.imwrite(IMAGE_PATH, image)   
     print(f"Test image successfully generated and saved as '{IMAGE_PATH}' ({width}x{height} pixels).")
 
 
@@ -78,7 +78,7 @@ def run_client():
         return
 
     # TODO 2: specifying height, width and channels from image shape
-    height, width, channels = img.shape               
+    height, width, channels = img.shape                
 
     payload = img.tobytes()
     payload_length = len(payload)
@@ -90,14 +90,14 @@ def run_client():
         header = struct.pack('!HHI', height, width, payload_length)   
 
         # TODO 4: Transmit header and raw pixel data
-        if mode == 'raw':                             
+        if mode == 'raw':                              
             client_socket.sendall(header + payload)
             calls = 1
         else:
             calls = send_pixel_by_pixel(client_socket, header, img)
 
-        elapsed = time.time() - start_time             
-        throughput = (payload_length / (1024 * 1024)) / elapsed   
+        elapsed = time.time() - start_time            
+        throughput = (payload_length / (1024 * 1024)) / elapsed  
 
         print(f"Sent raw image {width}x{height}x{channels} "
               f"({payload_length} bytes) in {elapsed:.4f} seconds "
