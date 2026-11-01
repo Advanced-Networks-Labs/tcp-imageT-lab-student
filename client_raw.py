@@ -1,13 +1,22 @@
 import socket
 import struct
+import sys
 import time
 import cv2
+import numpy as np
 
 SERVER_IP = '127.0.0.1'
 PORT = 8080
+IMAGE_PATH = 'test_image.png'
+HEADER_FORMAT = '!HHI'  # must match the server: height, width, payload length
+
+# "bulk"  -> header + whole image in one sendall()   (fast)
+# "pixel" -> one sendall() per pixel                 (slow, for comparison)
+# Choose with: python client_raw.py pixel
+mode = sys.argv[1] if len(sys.argv) > 1 else 'bulk'
 
 
-def generate_test_image(IMAGE_PATH, width, height):
+def generate_test_image(filename, width, height):
     # 1. Create a blank dark-gray canvas (BGR format)
     image = np.full((height, width, 3), 40, dtype=np.uint8)
 
@@ -18,15 +27,10 @@ def generate_test_image(IMAGE_PATH, width, height):
             image[y, x, 1] = int((y / height) * 255)      # Green channel gradient
 
     # 3. Draw geometric shapes
-    # Red circle in the center
     center_coordinates = (width // 2, height // 2)
-    cv2.circle(image, center_coordinates, 80, (0, 0, 255), -1)
-
-    # Yellow rectangle
-    cv2.rectangle(image, (50, 50), (200, 150), (0, 255, 255), 3)
-
-    # Green line
-    cv2.line(image, (50, height - 50), (width - 50, height - 50), (0, 255, 0), 4)
+    cv2.circle(image, center_coordinates, 80, (0, 0, 255), -1)           # red circle
+    cv2.rectangle(image, (50, 50), (200, 150), (0, 255, 255), 3)         # yellow rectangle
+    cv2.line(image, (50, height - 50), (width - 50, height - 50), (0, 255, 0), 4)  # green line
 
     # 4. Add text overlay
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -37,13 +41,14 @@ def generate_test_image(IMAGE_PATH, width, height):
     cv2.imwrite(filename, image)
     print(f"Test image successfully generated and saved as '{filename}' ({width}x{height} pixels).")
 
-   
+
 def send_pixel_by_pixel(sock, header, img):
     """Send the header, then every pixel in its own sendall() call.
 
     Pixels are sent row by row (top to bottom, left to right).
     Each pixel is `channels` bytes (BGR order for a colour image, as read by OpenCV).
-    """height, width, _ = img
+    """
+    height, width, _ = img.shape
     sock.sendall(header)
     calls = 1
     for y in range(height):
@@ -54,44 +59,46 @@ def send_pixel_by_pixel(sock, header, img):
 
 
 def run_client():
-
     # TODO 1: Prepare the generated test image
-	 
+    generate_test_image(IMAGE_PATH, 640, 480)
+
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    
     # Disable Nagle's algorithm so that small sends are not merged
     # by TCP into larger segments (true pixel-by-pixel transmission).
     client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
     client_socket.connect((SERVER_IP, PORT))
     print(f"Connected to server at {SERVER_IP}:{PORT} (mode: {mode})")
-	
- 
-	
+
     img = cv2.imread(IMAGE_PATH)
     if img is None:
         print(f"Error: {IMAGE_PATH} not found.")
         client_socket.close()
         return
-		
-    #TODO 2: specifying height, width and channels from image shape
-    	
+
+    # TODO 2: Get height, width and channels from the image shape
+    height, width, channels = img.shape
+
     payload = img.tobytes()
     payload_length = len(payload)
 
     try:
-        start_time = time.time()     
-            
-        # TODO 3: Construct fixed-size header specifying height (2 bytes), width (2 bytes) and payload length (4 bytes) using struct.pack()
-       
-        raise NotImplementedError("TODO 3: Implement header packing for raw image dimensions and length")
-		
+        start_time = time.time()
+
+        # TODO 3: Build the fixed-size 8-byte header with struct.pack()
+        header = struct.pack(HEADER_FORMAT, height, width, payload_length)
+
         # TODO 4: Transmit header and raw pixel data
-    
-        
-        elapsed = start_time - time.time()
-        
+        if mode == 'pixel':
+            calls = send_pixel_by_pixel(client_socket, header, img)
+        else:
+            client_socket.sendall(header + payload)
+            calls = 1
+
+        elapsed = time.time() - start_time  # end minus start (original had it reversed)
+        throughput = (payload_length / (1024 * 1024)) / elapsed if elapsed > 0 else 0.0
+
         print(f"Sent raw image {width}x{height}x{channels} "
               f"({payload_length} bytes) in {elapsed:.4f} seconds "
               f"using {calls} send call(s) ({throughput:.2f} MB/s).")
@@ -101,5 +108,4 @@ def run_client():
 
 
 if __name__ == '__main__':
-   
     run_client()
